@@ -9,13 +9,15 @@ public class Server {
 
     public ServerSocket socket;
     public int port;
+    public ListenThread listenThread;
 
     public Server(int port){
         try {
 
             this.port = port;
             this.socket = new ServerSocket(this.port);
-            listen();
+            this.listenThread = new ListenThread(this.socket);
+
         }catch (Exception e){
             System.out.println("error: " + e.getMessage());
         }
@@ -23,29 +25,56 @@ public class Server {
     }
 
     public void listen(){
-        System.out.println("listining");
-        while (!this.socket.isClosed()){
 
-            try{
+        this.listenThread.start();
 
-                    Socket nClient =this.socket.accept();
-                    System.out.println("client connected");
-
-                    ObjectOutputStream cOutput = new ObjectOutputStream(nClient.getOutputStream());
-                    ObjectInputStream cInput = new ObjectInputStream(nClient.getInputStream());
-
-                    Object msg = cInput.readObject();
-                    System.out.println(msg.toString());
-
-                    cOutput.writeObject("merhaba hosgeldin");
+    }
 
 
-            }catch (Exception e){
-                System.out.println("error: " + e.getMessage());
-            }
+
+    class ListenThread extends Thread{
+
+        private ServerSocket socket;
+
+        public ListenThread(ServerSocket socket){
+
+            this.socket = socket;
 
         }
 
+
+        @Override
+        public void run() {
+
+            while (!this.socket.isClosed()) {
+
+                try{
+
+                    System.out.println("listining");
+                    Socket nScoket =this.socket.accept();//blocking method | soket dondurur ip + port
+                    SClient nClient = new SClient(nScoket);
+                    nClient.listen();
+
+                    /*
+                    System.out.println("client connected");
+
+                    ObjectOutputStream cOutput = new ObjectOutputStream(nScoket.getOutputStream());
+                    ObjectInputStream cInput = new ObjectInputStream(nScoket.getInputStream());
+
+                    Object msg = cInput.readObject(); //blocking method | waiting message
+                    System.out.println(msg.toString());
+
+                    cOutput.writeObject("merhaba hosgeldin");
+                    */
+
+                }catch (Exception e){
+                    System.out.println("error: " + e.getMessage());
+                }
+
+
+            }
+
+        }
     }
 
 }
